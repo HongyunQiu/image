@@ -33,6 +33,11 @@ interface Nodes {
   wrapper: HTMLElement;
 
   /**
+   * Figure element wrapping image + caption (for centering).
+   */
+  figure: HTMLElement;
+
+  /**
    * Container for the image element in the UI.
    */
   imageContainer: HTMLElement;
@@ -126,6 +131,7 @@ export default class Ui {
     this.readOnly = readOnly;
     this.nodes = {
       wrapper: make('div', [this.CSS.baseClass, this.CSS.wrapper]),
+      figure: make('div', [this.CSS.figure]),
       imageContainer: make('div', [this.CSS.imageContainer]),
       fileButton: this.createFileButton(),
       imageEl: undefined,
@@ -138,17 +144,20 @@ export default class Ui {
     /**
      * Create base structure
      *  <wrapper>
-     *    <image-container>
-     *      <image-preloader />
-     *    </image-container>
-     *    <caption />
+     *    <figure>
+     *      <image-container>
+     *        <image-preloader />
+     *      </image-container>
+     *      <caption />
+     *    </figure>
      *    <select-file-button />
      *  </wrapper>
      */
     this.nodes.caption.dataset.placeholder = this.config.captionPlaceholder;
     this.nodes.imageContainer.appendChild(this.nodes.imagePreloader);
-    this.nodes.wrapper.appendChild(this.nodes.imageContainer);
-    this.nodes.wrapper.appendChild(this.nodes.caption);
+    this.nodes.figure.appendChild(this.nodes.imageContainer);
+    this.nodes.figure.appendChild(this.nodes.caption);
+    this.nodes.wrapper.appendChild(this.nodes.figure);
     this.nodes.wrapper.appendChild(this.nodes.fileButton);
   }
 
@@ -287,6 +296,7 @@ export default class Ui {
        * Tool's classes
        */
       wrapper: 'image-tool',
+      figure: 'image-tool__figure',
       imageContainer: 'image-tool__image',
       imagePreloader: 'image-tool__image-preloader',
       imageEl: 'image-tool__image-picture',

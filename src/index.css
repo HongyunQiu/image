@@ -1,13 +1,31 @@
 .image-tool {
-  --bg-color: #cdd1e0;
-  --front-color: #388ae5;
-  --border-color: #e8e8eb;
+  /* Map to QNotes theme tokens (with fallbacks) */
+  --bg-color: var(--control-bg, #cdd1e0);
+  --front-color: var(--primary, #388ae5);
+  --border-color: var(--border, #e8e8eb);
+  --image-caption-bg: var(--surface-muted, #f3f4f6);
+  --image-caption-border: var(--border, rgba(0, 0, 0, 0.08));
+  --image-caption-text: var(--text, #2b2f36);
+  --image-caption-placeholder: var(--text-muted, #707684);
+  --image-caption-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  /* Keep image block left-aligned (default Editor.js behavior) */
+  text-align: left;
+
+  &__figure {
+    /* Shrink-wrap to image width, but stay left-aligned */
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-start;
+    max-width: 100%;
+  }
 
   &__image {
     border-radius: 3px;
     overflow: hidden;
-    margin-bottom: 10px;
+    margin-bottom: 6px;
     padding-bottom: 0;
+    /* Make the figure width follow the image width */
+    display: inline-block;
 
     &-picture {
       max-width: 100%;
@@ -45,18 +63,37 @@
   }
 
   &__caption {
-    visibility: hidden;
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    margin-bottom: 10px;
+    display: none;
+    width: fit-content;
+    max-width: 100%;
+    margin: 1px auto 0;
+    min-width: 68px;
+    padding: 4px 8px;
+    box-sizing: border-box;
+    border-radius: 8px;
+    position: relative;
+    border: 1px solid var(--image-caption-border);
+    background: var(--image-caption-bg);
+    color: var(--image-caption-text);
+    font-size: 14px;
+    line-height: 1.5;
+    letter-spacing: 0.2px;
+    box-shadow: var(--image-caption-shadow);
+    outline: none;
+    white-space: pre-wrap;
+    word-break: break-word;
+    caret-color: var(--image-caption-text);
+    /* Center caption horizontally relative to image width */
+    align-self: center;
 
     &[contentEditable="true"][data-placeholder]::before {
       position: absolute !important;
       content: attr(data-placeholder);
-      color: #707684;
+      color: var(--image-caption-placeholder);
       font-weight: normal;
       display: none;
+      left: 8px;
+      top: 4px;
     }
 
     &[contentEditable="true"][data-placeholder]:empty {
@@ -83,7 +120,7 @@
   &--empty,
   &--uploading {
     ^&__caption {
-      visibility: hidden !important;
+      display: none !important;
     }
   }
 
@@ -160,10 +197,19 @@
 
   &--caption {
     ^&__caption {
-      visibility: visible;
+      display: inline-block;
     }
+    /* Override legacy bundled CSS: .image-tool--caption { padding-bottom: 50px } */
+    padding-bottom: 0;
+  }
+}
 
-    padding-bottom: 50px
+@media (prefers-color-scheme: dark) {
+  .image-tool {
+    /* Slightly stronger shadow in dark to keep separation */
+    --image-caption-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+    /* In dark, use control bg for better contrast */
+    --image-caption-bg: var(--control-bg, #222327);
   }
 }
 
