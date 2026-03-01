@@ -43,6 +43,8 @@ echo.
 
 set SRC_DIR=dist
 set DEST_DIR=..\..\QNotes\public\vendor\editorjs-image
+set SRC_UMD_FILE=!SRC_DIR!\image.umd.js
+set DEST_UMD_FILE=!DEST_DIR!\image.umd.js
 
 if not exist "!SRC_DIR!\" (
     echo ERROR: folder not found: !SRC_DIR!\
@@ -55,8 +57,8 @@ if not exist "!SRC_DIR!\" (
 )
 
 REM Minimal check: UMD build output for browser usage
-if not exist "!SRC_DIR!\image.umd.js" (
-    echo ERROR: file not found: !SRC_DIR!\image.umd.js
+if not exist "!SRC_UMD_FILE!" (
+    echo ERROR: file not found: !SRC_UMD_FILE!
     echo Make sure Vite lib build output is configured correctly.
     echo.
     if /I "%~1" NEQ "--no-pause" (
@@ -80,19 +82,36 @@ if not exist "!DEST_DIR!" (
     echo Target folder created.
 )
 
-echo Copying all files from !SRC_DIR!\ to: !DEST_DIR!
-xcopy /E /I /Y "!SRC_DIR!\*" "!DEST_DIR!\" >nul
-set COPY_RESULT=!ERRORLEVEL!
+if /I "%~1"=="--all" (
+    echo Copying all files from !SRC_DIR!\ to: !DEST_DIR!
+    xcopy /E /I /Y "!SRC_DIR!\*" "!DEST_DIR!\" >nul
+    set COPY_RESULT=!ERRORLEVEL!
 
-if !COPY_RESULT! GEQ 4 (
-    echo Copy failed. Exit code: !COPY_RESULT!
-    echo.
-    if /I "%~1" NEQ "--no-pause" (
-        pause
+    if !COPY_RESULT! GEQ 4 (
+        echo Copy failed. Exit code: !COPY_RESULT!
+        echo.
+        if /I "%~2" NEQ "--no-pause" (
+            pause
+        )
+        exit /b !COPY_RESULT!
+    ) else (
+        echo Copy succeeded.
     )
-    exit /b !COPY_RESULT!
 ) else (
-    echo Copy succeeded.
+    echo Copying UMD only to: !DEST_UMD_FILE!
+    copy /Y "!SRC_UMD_FILE!" "!DEST_UMD_FILE!" >nul
+    set COPY_RESULT=!ERRORLEVEL!
+
+    if !COPY_RESULT! NEQ 0 (
+        echo Copy failed. Exit code: !COPY_RESULT!
+        echo.
+        if /I "%~1" NEQ "--no-pause" (
+            pause
+        )
+        exit /b !COPY_RESULT!
+    ) else (
+        echo Copy succeeded.
+    )
 )
 
 echo.
@@ -102,7 +121,7 @@ echo Target folder: !DEST_DIR!
 echo Key file: !DEST_DIR!\image.umd.js
 echo ========================================
 
-if /I "%~1" NEQ "--no-pause" (
+if /I "%~1" NEQ "--no-pause" if /I "%~2" NEQ "--no-pause" (
     pause
 )
 
