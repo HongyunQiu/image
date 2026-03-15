@@ -159,6 +159,85 @@ export default class Ui {
     this.nodes.figure.appendChild(this.nodes.caption);
     this.nodes.wrapper.appendChild(this.nodes.figure);
     this.nodes.wrapper.appendChild(this.nodes.fileButton);
+
+    if (!this.readOnly) {
+      this.lockCaptionNavigationInside();
+    }
+  }
+
+  /**
+   * Prevent arrow-navigation keystrokes inside caption from bubbling up to Editor.js,
+   * which can interpret boundary arrows as block navigation.
+   */
+  private lockCaptionNavigationInside(): void {
+    const lockedKeys = new Set([
+      'ArrowLeft',
+      'ArrowRight',
+      'ArrowUp',
+      'ArrowDown',
+      'Home',
+      'End',
+      'PageUp',
+      'PageDown',
+    ]);
+
+    this.nodes.caption.addEventListener(
+      'keydown',
+      (event: KeyboardEvent) => {
+        if (lockedKeys.has(event.key)) {
+          /**
+           * Do not preventDefault — keep native caret movement inside caption.
+           * Only stop propagation so Editor.js won't treat it as block navigation.
+           */
+          event.stopPropagation();
+          event.stopImmediatePropagation();
+          return;
+        }
+
+        if (event.key === 'Backspace' && this.isCaretAtCaptionStart()) {
+          /**
+           * When caret is at the very beginning, Editor.js can interpret Backspace as a block-level action.
+           * Keep native behavior (no preventDefault), just stop bubbling.
+           */
+          event.stopPropagation();
+          event.stopImmediatePropagation();
+        }
+      },
+      true
+    );
+  }
+
+  private isCaretAtCaptionStart(): boolean {
+    const selection = window.getSelection();
+
+    if (!selection || selection.rangeCount === 0) {
+      return false;
+    }
+
+    const range = selection.getRangeAt(0);
+
+    if (!range.collapsed) {
+      return false;
+    }
+
+    if (!this.nodes.caption.contains(range.startContainer)) {
+      return false;
+    }
+
+    /**
+     * Build a range from caption start to caret and see if it contains any text.
+     * If empty, caret is at the visual beginning (including empty/<br> cases).
+     */
+    const preCaretRange = range.cloneRange();
+    preCaretRange.selectNodeContents(this.nodes.caption);
+
+    try {
+      preCaretRange.setEnd(range.startContainer, range.startOffset);
+    } catch {
+      return false;
+    }
+
+    return preCaretRange.toString() === '';
   }
 
   /**
