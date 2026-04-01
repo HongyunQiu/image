@@ -64,6 +64,8 @@ export interface UploadResponseFormat<AdditionalFileData = {}> {
   } & AdditionalFileData;
 }
 
+export type ImageDisplaySize = 'large' | 'medium' | 'small';
+
 /**
  * ImageToolData type representing the input and output data format for the image tool, including optional custome actions.
  */
@@ -87,6 +89,11 @@ export type ImageToolData<Actions = {}, AdditionalFileData = {}> = {
    * Flag indicating whether the image is stretched.
    */
   stretched: boolean;
+
+  /**
+   * Display size of the image relative to the tool width.
+   */
+  displaySize: ImageDisplaySize;
 
   /**
    * Object containing the URL of the image file.

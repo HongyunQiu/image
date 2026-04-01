@@ -15,7 +15,7 @@
     /* Shrink-wrap to image width, but stay left-aligned */
     display: inline-flex;
     flex-direction: column;
-    align-items: flex-start;
+    align-items: center;
     max-width: 100%;
   }
 
@@ -26,6 +26,9 @@
     padding-bottom: 0;
     /* Make the figure width follow the image width */
     display: inline-block;
+    width: fit-content;
+    max-width: 100%;
+    align-self: center;
 
     &-picture {
       max-width: 100%;
@@ -62,8 +65,19 @@
     }
   }
 
-  &__caption {
+  &__controls {
     display: none;
+    width: fit-content;
+    max-width: 100%;
+    align-items: center;
+    gap: 6px;
+    justify-content: center;
+    margin: 0 auto;
+  }
+
+  &__caption {
+    display: block;
+    flex: 0 1 auto;
     width: fit-content;
     max-width: 100%;
     margin: 1px auto 0;
@@ -83,9 +97,6 @@
     white-space: pre-wrap;
     word-break: break-word;
     caret-color: var(--image-caption-text);
-    /* Center caption horizontally relative to image width */
-    align-self: center;
-
     &[contentEditable="true"][data-placeholder]::before {
       position: absolute !important;
       content: attr(data-placeholder);
@@ -107,6 +118,32 @@
     }
   }
 
+  &__size-button {
+    flex: 0 0 auto;
+    width: 26px;
+    height: 26px;
+    margin-top: 1px;
+    padding: 0;
+    border: 1px solid var(--image-caption-border);
+    border-radius: 999px;
+    background: var(--image-caption-bg);
+    color: var(--image-caption-text);
+    box-shadow: var(--image-caption-shadow);
+    outline: none;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+
+    &:disabled {
+      cursor: default;
+      opacity: 0.9;
+    }
+  }
+
   &--empty {
     ^&__image {
       display: none;
@@ -119,7 +156,7 @@
 
   &--empty,
   &--uploading {
-    ^&__caption {
+    ^&__controls {
       display: none !important;
     }
   }
@@ -196,11 +233,44 @@
   }
 
   &--caption {
-    ^&__caption {
-      display: inline-block;
+    ^&__controls {
+      display: flex;
     }
     /* Override legacy bundled CSS: .image-tool--caption { padding-bottom: 50px } */
     padding-bottom: 0;
+  }
+
+  &--display-size-large {
+    ^&__image {
+      width: fit-content;
+    }
+
+    ^&__image-picture {
+      width: auto;
+      max-width: 100%;
+    }
+  }
+
+  &--display-size-medium {
+    ^&__image {
+      width: fit-content;
+    }
+
+    ^&__image-picture {
+      width: auto;
+      max-width: 100%;
+    }
+  }
+
+  &--display-size-small {
+    ^&__image {
+      width: fit-content;
+    }
+
+    ^&__image-picture {
+      width: auto;
+      max-width: 100%;
+    }
   }
 }
 

@@ -36,7 +36,7 @@ import Ui from './ui';
 import Uploader from './uploader';
 
 import { IconAddBorder, IconStretch, IconAddBackground, IconPicture, IconText } from '@codexteam/icons';
-import type { ActionConfig, UploadResponseFormat, ImageToolData, ImageConfig, HTMLPasteEventDetailExtended, ImageSetterParam, FeaturesConfig } from './types/types';
+import type { ActionConfig, UploadResponseFormat, ImageToolData, ImageConfig, HTMLPasteEventDetailExtended, ImageSetterParam, FeaturesConfig, ImageDisplaySize } from './types/types';
 
 type ImageToolConstructorOptions = BlockToolConstructorOptions<ImageToolData, ImageConfig>;
 
@@ -143,6 +143,7 @@ export default class ImageTool implements BlockTool {
       withBorder: false,
       withBackground: false,
       stretched: false,
+      displaySize: 'large',
       file: {
         url: '',
       },
@@ -223,6 +224,7 @@ export default class ImageTool implements BlockTool {
     const caption = this.ui.nodes.caption;
 
     this._data.caption = caption.innerHTML;
+    this._data.displaySize = this.normalizeDisplaySize(this.ui.nodes.sizeButton.dataset.size);
 
     return this.data;
   }
@@ -394,7 +396,9 @@ export default class ImageTool implements BlockTool {
     this.image = data.file;
 
     this._data.caption = data.caption || '';
+    this._data.displaySize = this.normalizeDisplaySize(data.displaySize);
     this.ui.fillCaption(this._data.caption);
+    this.ui.setDisplaySize(this._data.displaySize);
 
     ImageTool.tunes.forEach(({ name: tune }) => {
       const value = typeof data[tune as keyof ImageToolData] !== 'undefined' ? data[tune as keyof ImageToolData] === true || data[tune as keyof ImageToolData] === 'true' : false;
@@ -516,5 +520,17 @@ export default class ImageTool implements BlockTool {
   private uploadUrl(url: string): void {
     this.ui.showPreloader(url);
     this.uploader.uploadByUrl(url);
+  }
+
+  /**
+   * Normalizes display size from persisted data.
+   * @param size - saved size value
+   */
+  private normalizeDisplaySize(size: unknown): ImageDisplaySize {
+    if (size === 'medium' || size === 'small') {
+      return size;
+    }
+
+    return 'large';
   }
 }

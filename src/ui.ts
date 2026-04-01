@@ -1,7 +1,7 @@
 import { IconPicture } from '@codexteam/icons';
 import { make } from './utils/dom';
 import type { API } from '@editorjs/editorjs';
-import type { ImageConfig } from './types/types';
+import type { ImageConfig, ImageDisplaySize } from './types/types';
 
 /**
  * Enumeration representing the different states of the UI.
@@ -58,9 +58,19 @@ interface Nodes {
   imagePreloader: HTMLElement;
 
   /**
+   * Row containing caption input and display size controls.
+   */
+  controls: HTMLElement;
+
+  /**
    * Caption element for the image.
    */
   caption: HTMLElement;
+
+  /**
+   * Button for switching display size.
+   */
+  sizeButton: HTMLButtonElement;
 }
 
 /**
@@ -118,6 +128,11 @@ export default class Ui {
   private readOnly: boolean;
 
   /**
+   * Observes wrapper size changes to keep display-size caps based on tool width.
+   */
+  private resizeObserver?: ResizeObserver;
+
+  /**
    * @param ui - image tool Ui module
    * @param ui.api - Editor.js API
    * @param ui.config - user config
@@ -136,9 +151,11 @@ export default class Ui {
       fileButton: this.createFileButton(),
       imageEl: undefined,
       imagePreloader: make('div', this.CSS.imagePreloader),
+      controls: make('div', [this.CSS.controls]),
       caption: make('div', [this.CSS.input, this.CSS.caption], {
         contentEditable: !this.readOnly,
       }),
+      sizeButton: this.createSizeButton(),
     };
 
     /**
@@ -148,15 +165,20 @@ export default class Ui {
      *      <image-container>
      *        <image-preloader />
      *      </image-container>
-     *      <caption />
+     *      <controls>
+     *        <caption />
+     *        <size-button />
+     *      </controls>
      *    </figure>
      *    <select-file-button />
      *  </wrapper>
      */
     this.nodes.caption.dataset.placeholder = this.config.captionPlaceholder;
     this.nodes.imageContainer.appendChild(this.nodes.imagePreloader);
+    this.nodes.controls.appendChild(this.nodes.caption);
+    this.nodes.controls.appendChild(this.nodes.sizeButton);
     this.nodes.figure.appendChild(this.nodes.imageContainer);
-    this.nodes.figure.appendChild(this.nodes.caption);
+    this.nodes.figure.appendChild(this.nodes.controls);
     this.nodes.wrapper.appendChild(this.nodes.figure);
     this.nodes.wrapper.appendChild(this.nodes.fileButton);
 
@@ -254,6 +276,8 @@ export default class Ui {
    */
   public render(): HTMLElement {
     this.toggleStatus(UiState.Empty);
+    this.attachResizeObserver();
+    this.applyDisplaySizeConstraints();
 
     return this.nodes.wrapper;
   }
@@ -274,6 +298,7 @@ export default class Ui {
   public hidePreloader(): void {
     this.nodes.imagePreloader.style.backgroundImage = '';
     this.toggleStatus(UiState.Empty);
+    this.applyDisplaySizeConstraints();
   }
 
   /**
@@ -332,9 +357,12 @@ export default class Ui {
       if (this.nodes.imagePreloader !== undefined) {
         this.nodes.imagePreloader.style.backgroundImage = '';
       }
+
+      this.applyDisplaySizeConstraints();
     });
 
     this.nodes.imageContainer.appendChild(this.nodes.imageEl);
+    this.applyDisplaySizeConstraints();
   }
 
   /**
@@ -345,6 +373,24 @@ export default class Ui {
     if (this.nodes.caption !== undefined) {
       this.nodes.caption.innerHTML = text;
     }
+  }
+
+  /**
+   * Applies and syncs the current display size selection.
+   * @param size - display size value
+   */
+  public setDisplaySize(size: ImageDisplaySize): void {
+    this.nodes.sizeButton.textContent = this.getDisplaySizeLabel(size);
+    this.nodes.sizeButton.dataset.size = size;
+    this.nodes.sizeButton.title = `图片尺寸: ${this.getDisplaySizeLabel(size)}`;
+
+    const sizes: ImageDisplaySize[] = ['large', 'medium', 'small'];
+
+    sizes.forEach((value) => {
+      this.nodes.wrapper.classList.toggle(`${this.CSS.wrapper}--display-size-${value}`, value === size);
+    });
+
+    this.applyDisplaySizeConstraints();
   }
 
   /**
@@ -379,7 +425,9 @@ export default class Ui {
       imageContainer: 'image-tool__image',
       imagePreloader: 'image-tool__image-preloader',
       imageEl: 'image-tool__image-picture',
+      controls: 'image-tool__controls',
       caption: 'image-tool__caption',
+      sizeButton: 'image-tool__size-button',
     };
   };
 
@@ -396,5 +444,93 @@ export default class Ui {
     });
 
     return button;
+  }
+
+  /**
+   * Creates display size button shown near the caption.
+   */
+  private createSizeButton(): HTMLButtonElement {
+    const button = make('button', [this.CSS.sizeButton], {
+      type: 'button',
+      disabled: this.readOnly,
+    }) as HTMLButtonElement;
+
+    button.addEventListener('click', () => {
+      const currentSize = (button.dataset.size as ImageDisplaySize | undefined) ?? 'large';
+      const nextSize = this.getNextDisplaySize(currentSize);
+
+      this.setDisplaySize(nextSize);
+    });
+
+    return button;
+  }
+
+  /**
+   * Applies display-size caps relative to the tool width instead of the already-scaled image width.
+   */
+  private applyDisplaySizeConstraints(): void {
+    const currentSize = (this.nodes.sizeButton.dataset.size as ImageDisplaySize | undefined) ?? 'large';
+    const wrapperWidth = this.nodes.wrapper.getBoundingClientRect().width;
+
+    if (wrapperWidth <= 0) {
+      return;
+    }
+
+    const ratioMap: Record<ImageDisplaySize, number> = {
+      large: 1,
+      medium: 0.5,
+      small: 0.3,
+    };
+
+    const maxWidth = Math.floor(wrapperWidth * ratioMap[currentSize]);
+
+    this.nodes.imageContainer.style.maxWidth = `${maxWidth}px`;
+  }
+
+  /**
+   * Watches tool width changes so display-size caps stay tied to the current tool width.
+   */
+  private attachResizeObserver(): void {
+    if (this.resizeObserver || typeof ResizeObserver === 'undefined') {
+      return;
+    }
+
+    this.resizeObserver = new ResizeObserver(() => {
+      this.applyDisplaySizeConstraints();
+    });
+
+    this.resizeObserver.observe(this.nodes.wrapper);
+  }
+
+  /**
+   * Gets compact label for the display size button.
+   * @param size - display size value
+   */
+  private getDisplaySizeLabel(size: ImageDisplaySize): string {
+    switch (size) {
+      case 'medium':
+        return 'M';
+      case 'small':
+        return 'S';
+      case 'large':
+      default:
+        return 'L';
+    }
+  }
+
+  /**
+   * Cycles to the next display size.
+   * @param size - current display size
+   */
+  private getNextDisplaySize(size: ImageDisplaySize): ImageDisplaySize {
+    switch (size) {
+      case 'large':
+        return 'medium';
+      case 'medium':
+        return 'small';
+      case 'small':
+      default:
+        return 'large';
+    }
   }
 }
