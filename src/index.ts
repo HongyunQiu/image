@@ -36,7 +36,7 @@ import Ui from './ui';
 import Uploader from './uploader';
 
 import { IconAddBorder, IconStretch, IconAddBackground, IconPicture, IconText } from '@codexteam/icons';
-import type { ActionConfig, UploadResponseFormat, ImageToolData, ImageConfig, HTMLPasteEventDetailExtended, ImageSetterParam, FeaturesConfig, ImageDisplaySize } from './types/types';
+import type { ActionConfig, UploadResponseFormat, ImageToolData, ImageConfig, HTMLPasteEventDetailExtended, ImageSetterParam, FeaturesConfig, ImageDisplaySize, ImageAlignment } from './types/types';
 
 type ImageToolConstructorOptions = BlockToolConstructorOptions<ImageToolData, ImageConfig>;
 
@@ -144,6 +144,7 @@ export default class ImageTool implements BlockTool {
       withBackground: false,
       stretched: false,
       displaySize: 'large',
+      alignment: 'left',
       file: {
         url: '',
       },
@@ -225,6 +226,7 @@ export default class ImageTool implements BlockTool {
 
     this._data.caption = caption.innerHTML;
     this._data.displaySize = this.normalizeDisplaySize(this.ui.nodes.sizeButton.dataset.size);
+    this._data.alignment = this.normalizeAlignment(this.ui.nodes.alignButton.dataset.alignment);
 
     return this.data;
   }
@@ -397,8 +399,10 @@ export default class ImageTool implements BlockTool {
 
     this._data.caption = data.caption || '';
     this._data.displaySize = this.normalizeDisplaySize(data.displaySize);
+    this._data.alignment = this.normalizeAlignment(data.alignment);
     this.ui.fillCaption(this._data.caption);
     this.ui.setDisplaySize(this._data.displaySize);
+    this.ui.setAlignment(this._data.alignment);
 
     ImageTool.tunes.forEach(({ name: tune }) => {
       const value = typeof data[tune as keyof ImageToolData] !== 'undefined' ? data[tune as keyof ImageToolData] === true || data[tune as keyof ImageToolData] === 'true' : false;
@@ -532,5 +536,17 @@ export default class ImageTool implements BlockTool {
     }
 
     return 'large';
+  }
+
+  /**
+   * Normalizes alignment from persisted data.
+   * @param alignment - saved alignment value
+   */
+  private normalizeAlignment(alignment: unknown): ImageAlignment {
+    if (alignment === 'center' || alignment === 'right') {
+      return alignment;
+    }
+
+    return 'left';
   }
 }

@@ -1,7 +1,7 @@
 import { IconPicture } from '@codexteam/icons';
 import { make } from './utils/dom';
 import type { API } from '@editorjs/editorjs';
-import type { ImageConfig, ImageDisplaySize } from './types/types';
+import type { ImageConfig, ImageDisplaySize, ImageAlignment } from './types/types';
 
 /**
  * Enumeration representing the different states of the UI.
@@ -66,6 +66,11 @@ interface Nodes {
    * Caption element for the image.
    */
   caption: HTMLElement;
+
+  /**
+   * Button for switching alignment.
+   */
+  alignButton: HTMLButtonElement;
 
   /**
    * Button for switching display size.
@@ -155,6 +160,7 @@ export default class Ui {
       caption: make('div', [this.CSS.input, this.CSS.caption], {
         contentEditable: !this.readOnly,
       }),
+      alignButton: this.createAlignButton(),
       sizeButton: this.createSizeButton(),
     };
 
@@ -166,6 +172,7 @@ export default class Ui {
      *        <image-preloader />
      *      </image-container>
      *      <controls>
+     *        <align-button />
      *        <caption />
      *        <size-button />
      *      </controls>
@@ -175,6 +182,7 @@ export default class Ui {
      */
     this.nodes.caption.dataset.placeholder = this.config.captionPlaceholder;
     this.nodes.imageContainer.appendChild(this.nodes.imagePreloader);
+    this.nodes.controls.appendChild(this.nodes.alignButton);
     this.nodes.controls.appendChild(this.nodes.caption);
     this.nodes.controls.appendChild(this.nodes.sizeButton);
     this.nodes.figure.appendChild(this.nodes.imageContainer);
@@ -394,6 +402,22 @@ export default class Ui {
   }
 
   /**
+   * Applies and syncs the current alignment selection.
+   * @param alignment - image alignment value
+   */
+  public setAlignment(alignment: ImageAlignment): void {
+    this.nodes.alignButton.textContent = this.getAlignmentLabel(alignment);
+    this.nodes.alignButton.dataset.alignment = alignment;
+    this.nodes.alignButton.title = `Image alignment: ${this.getAlignmentLabel(alignment)}`;
+
+    const alignments: ImageAlignment[] = ['left', 'center', 'right'];
+
+    alignments.forEach((value) => {
+      this.nodes.wrapper.classList.toggle(`${this.CSS.wrapper}--align-${value}`, value === alignment);
+    });
+  }
+
+  /**
    * Changes UI status
    * @param status - see {@link Ui.status} constants
    */
@@ -427,6 +451,7 @@ export default class Ui {
       imageEl: 'image-tool__image-picture',
       controls: 'image-tool__controls',
       caption: 'image-tool__caption',
+      alignButton: 'image-tool__align-button',
       sizeButton: 'image-tool__size-button',
     };
   };
@@ -460,6 +485,25 @@ export default class Ui {
       const nextSize = this.getNextDisplaySize(currentSize);
 
       this.setDisplaySize(nextSize);
+    });
+
+    return button;
+  }
+
+  /**
+   * Creates alignment button shown near the caption.
+   */
+  private createAlignButton(): HTMLButtonElement {
+    const button = make('button', [this.CSS.alignButton], {
+      type: 'button',
+      disabled: this.readOnly,
+    }) as HTMLButtonElement;
+
+    button.addEventListener('click', () => {
+      const currentAlignment = (button.dataset.alignment as ImageAlignment | undefined) ?? 'left';
+      const nextAlignment = this.getNextAlignment(currentAlignment);
+
+      this.setAlignment(nextAlignment);
     });
 
     return button;
@@ -519,6 +563,22 @@ export default class Ui {
   }
 
   /**
+   * Gets compact label for the alignment button.
+   * @param alignment - image alignment value
+   */
+  private getAlignmentLabel(alignment: ImageAlignment): string {
+    switch (alignment) {
+      case 'center':
+        return '.';
+      case 'right':
+        return '>';
+      case 'left':
+      default:
+        return '<';
+    }
+  }
+
+  /**
    * Cycles to the next display size.
    * @param size - current display size
    */
@@ -531,6 +591,22 @@ export default class Ui {
       case 'small':
       default:
         return 'large';
+    }
+  }
+
+  /**
+   * Cycles to the next alignment.
+   * @param alignment - current alignment
+   */
+  private getNextAlignment(alignment: ImageAlignment): ImageAlignment {
+    switch (alignment) {
+      case 'left':
+        return 'center';
+      case 'center':
+        return 'right';
+      case 'right':
+      default:
+        return 'left';
     }
   }
 }

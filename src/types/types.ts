@@ -65,6 +65,7 @@ export interface UploadResponseFormat<AdditionalFileData = {}> {
 }
 
 export type ImageDisplaySize = 'large' | 'medium' | 'small';
+export type ImageAlignment = 'left' | 'center' | 'right';
 
 /**
  * ImageToolData type representing the input and output data format for the image tool, including optional custome actions.
@@ -94,6 +95,11 @@ export type ImageToolData<Actions = {}, AdditionalFileData = {}> = {
    * Display size of the image relative to the tool width.
    */
   displaySize: ImageDisplaySize;
+
+  /**
+   * Horizontal alignment of the image block.
+   */
+  alignment: ImageAlignment;
 
   /**
    * Object containing the URL of the image file.

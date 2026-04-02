@@ -8,7 +8,7 @@
   --image-caption-text: var(--text, #2b2f36);
   --image-caption-placeholder: var(--text-muted, #707684);
   --image-caption-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
-  /* Keep image block left-aligned (default Editor.js behavior) */
+  /* Keep image block left-aligned by default */
   text-align: left;
 
   &__figure {
@@ -118,6 +118,7 @@
     }
   }
 
+  &__align-button,
   &__size-button {
     flex: 0 0 auto;
     width: 26px;
@@ -141,6 +142,33 @@
     &:disabled {
       cursor: default;
       opacity: 0.9;
+    }
+  }
+
+  &--align-left {
+    text-align: left;
+
+    ^&__figure {
+      margin-left: 0;
+      margin-right: auto;
+    }
+  }
+
+  &--align-center {
+    text-align: center;
+
+    ^&__figure {
+      margin-left: auto;
+      margin-right: auto;
+    }
+  }
+
+  &--align-right {
+    text-align: right;
+
+    ^&__figure {
+      margin-left: auto;
+      margin-right: 0;
     }
   }
 
